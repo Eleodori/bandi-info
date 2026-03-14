@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bandi Info - Gestione Bandi di Finanziamento</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <header><div class="header-content"><h1>Bandi Info</h1><p class="subtitle">Gestione bandi di finanziamento</p></div></header>
+    <main>
+      <div class="tabs">
+        <button class="tab active" data-tab="bandi">Bandi Caricati</button>
+        <button class="tab" data-tab="upload">Carica PDF</button>
+        <button class="tab" data-tab="chat">Assistente AI</button>
+      </div>
+      <section id="tab-bandi" class="tab-content active">
+        <div class="section-header"><h2>Bandi Indicizzati</h2><button id="btn-refresh" class="btn btn-outline" onclick="loadBandi()">Aggiorna</button></div>
+        <div id="bandi-list" class="bandi-grid"><div class="loading">Caricamento bandi...</div></div>
+      </section>
+      <section id="tab-upload" class="tab-content">
+        <h2>Carica un nuovo bando</h2>
+        <form id="upload-form" class="upload-form">
+          <div class="form-group"><label for="nome_bando">Nome del Bando *</label><input type="text" id="nome_bando" required placeholder="Es: Bando FESR Innovazione 2026"></div>
+          <div class="form-group"><label for="data_scadenza">Data di Scadenza *</label><input type="date" id="data_scadenza" required></div>
+          <div class="form-group"><label for="pdf_file">File PDF *</label><div class="file-drop" id="file-drop"><input type="file" id="pdf_file" accept=".pdf" required><p>Trascina un PDF qui o <span>sfoglia</span></p><p class="file-name" id="file-name"></p></div></div>
+          <button type="submit" class="btn btn-primary" id="btn-upload"><span class="btn-text">Carica e Indicizza</span><span class="btn-loading" style="display:none">Indicizzazione in corso...</span></button>
+        </form>
+        <div id="upload-result" class="result-message"></div>
+      </section>
+      <section id="tab-chat" class="tab-content">
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages"><div class="message bot"><div class="message-content">Ciao! Sono l'assistente AI per i bandi di finanziamento.</div></div></div>
+          <form class="chat-input" id="chat-form"><input type="text" id="chat-input" placeholder="Scrivi la tua domanda..." autocomplete="off"><button type="submit" class="btn btn-primary" id="btn-send">Invia</button></form>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="modal-delete" class="modal" style="display:none"><div class="modal-content"><h3>Conferma eliminazione</h3><p>Sei sicuro di voler eliminare il bando <strong id="delete-bando-name"></strong>?</p><div class="modal-actions"><button class="btn btn-outline" onclick="closeDeleteModal()">Annulla</button><button class="btn btn-danger" id="btn-confirm-delete">Elimina</button></div></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
