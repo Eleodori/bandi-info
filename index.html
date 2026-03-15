@@ -10,36 +10,114 @@
 </head>
 <body>
   <div id="app">
-    <header><div class="header-content"><h1>Bandi Info</h1><p class="subtitle">Gestione bandi di finanziamento</p></div></header>
+    <header>
+      <div class="header-content">
+        <div class="header-logo">
+          <div class="logo-icon">BI</div>
+          <div>
+            <h1>Bandi Info</h1>
+            <p class="subtitle">Gestione bandi di finanziamento</p>
+          </div>
+        </div>
+      </div>
+    </header>
     <main>
       <div class="tabs">
-        <button class="tab active" data-tab="bandi">Bandi Caricati</button>
-        <button class="tab" data-tab="upload">Carica PDF</button>
-        <button class="tab" data-tab="chat">Assistente AI</button>
+        <button class="tab active" data-tab="bandi">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Bandi Caricati
+        </button>
+        <button class="tab" data-tab="upload">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Carica PDF
+        </button>
+        <button class="tab" data-tab="chat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Assistente AI
+        </button>
       </div>
       <section id="tab-bandi" class="tab-content active">
-        <div class="section-header"><h2>Bandi Indicizzati</h2><button id="btn-refresh" class="btn btn-outline" onclick="loadBandi()">Aggiorna</button></div>
-        <div id="bandi-list" class="bandi-grid"><div class="loading">Caricamento bandi...</div></div>
+        <div class="section-header">
+          <h2>Bandi Indicizzati</h2>
+          <button id="btn-refresh" class="btn btn-outline" onclick="loadBandi()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Aggiorna
+          </button>
+        </div>
+        <div id="bandi-list" class="bandi-grid"><div class="loading"><div class="loading-spinner"></div><p>Caricamento bandi...</p></div></div>
       </section>
       <section id="tab-upload" class="tab-content">
-        <h2>Carica un nuovo bando</h2>
-        <form id="upload-form" class="upload-form">
-          <div class="form-group"><label for="nome_bando">Nome del Bando *</label><input type="text" id="nome_bando" required placeholder="Es: Bando FESR Innovazione 2026"></div>
-          <div class="form-group"><label for="data_scadenza">Data di Scadenza *</label><input type="date" id="data_scadenza" required></div>
-          <div class="form-group"><label for="pdf_file">File PDF *</label><div class="file-drop" id="file-drop"><input type="file" id="pdf_file" accept=".pdf" required><p>Trascina un PDF qui o <span>sfoglia</span></p><p class="file-name" id="file-name"></p></div></div>
-          <button type="submit" class="btn btn-primary" id="btn-upload"><span class="btn-text">Carica e Indicizza</span><span class="btn-loading" style="display:none">Indicizzazione in corso...</span></button>
-        </form>
+        <div class="upload-wrapper">
+          <div class="upload-header">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <h2>Carica un nuovo bando</h2>
+            <p class="upload-subtitle">Carica un file PDF per indicizzarlo e renderlo disponibile all'assistente AI</p>
+          </div>
+          <form id="upload-form" class="upload-form">
+            <div class="form-group">
+              <label for="nome_bando">Nome del Bando</label>
+              <input type="text" id="nome_bando" required placeholder="Es: Bando FESR Innovazione 2026">
+            </div>
+            <div class="form-group">
+              <label for="data_scadenza">Data di Scadenza</label>
+              <input type="date" id="data_scadenza" required>
+            </div>
+            <div class="form-group">
+              <label for="pdf_file">File PDF</label>
+              <div class="file-drop" id="file-drop">
+                <input type="file" id="pdf_file" accept=".pdf" required>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <p>Trascina un PDF qui o <span>sfoglia</span></p>
+                <p class="file-hint">Formato accettato: PDF</p>
+                <p class="file-name" id="file-name"></p>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-upload-main" id="btn-upload">
+              <span class="btn-text">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Carica e Indicizza
+              </span>
+              <span class="btn-loading" style="display:none">
+                <div class="btn-spinner"></div>
+                Indicizzazione in corso...
+              </span>
+            </button>
+          </form>
+        </div>
         <div id="upload-result" class="result-message"></div>
       </section>
       <section id="tab-chat" class="tab-content">
         <div class="chat-container">
-          <div class="chat-messages" id="chat-messages"><div class="message bot"><div class="message-content">Ciao! Sono l'assistente AI per i bandi di finanziamento.</div></div></div>
-          <form class="chat-input" id="chat-form"><input type="text" id="chat-input" placeholder="Scrivi la tua domanda..." autocomplete="off"><button type="submit" class="btn btn-primary" id="btn-send">Invia</button></form>
+          <div class="chat-header">
+            <div class="chat-header-info">
+              <div class="chat-avatar">AI</div>
+              <div>
+                <div class="chat-header-title">Assistente Bandi</div>
+                <div class="chat-header-status">Online</div>
+              </div>
+            </div>
+            <button class="btn btn-new-chat" id="btn-new-chat" onclick="newChat()" title="Nuova chat">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuova chat
+            </button>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="message bot"><div class="message-avatar">AI</div><div class="message-content">Ciao! Sono l'assistente AI per i bandi di finanziamento. Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</div></div>
+          </div>
+          <form class="chat-input" id="chat-form">
+            <input type="text" id="chat-input" placeholder="Scrivi la tua domanda..." autocomplete="off">
+            <button type="submit" class="btn btn-send" id="btn-send">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </form>
         </div>
       </section>
     </main>
   </div>
-  <div id="modal-delete" class="modal" style="display:none"><div class="modal-content"><h3>Conferma eliminazione</h3><p>Sei sicuro di voler eliminare il bando <strong id="delete-bando-name"></strong>?</p><div class="modal-actions"><button class="btn btn-outline" onclick="closeDeleteModal()">Annulla</button><button class="btn btn-danger" id="btn-confirm-delete">Elimina</button></div></div></div>
+  <div id="modal-delete" class="modal" style="display:none"><div class="modal-overlay" onclick="closeDeleteModal()"></div><div class="modal-content"><div class="modal-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+  </div><h3>Conferma eliminazione</h3><p>Sei sicuro di voler eliminare il bando <strong id="delete-bando-name"></strong>? Questa azione non può essere annullata.</p><div class="modal-actions"><button class="btn btn-outline" onclick="closeDeleteModal()">Annulla</button><button class="btn btn-danger" id="btn-confirm-delete">Elimina</button></div></div></div>
+  <div id="toast-container"></div>
   <script src="app.js"></script>
 </body>
 </html>
