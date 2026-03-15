@@ -27,6 +27,21 @@ function showToast(message, type) {
   }, 3000);
 }
 
+// === Button Ripple Effect ===
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest('.btn');
+  if (!btn) return;
+  var ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  var rect = btn.getBoundingClientRect();
+  var size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', function () { ripple.remove(); });
+});
+
 // === Tab Navigation ===
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -36,6 +51,14 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
   });
 });
+
+function switchToTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tabName);
+  });
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+}
 
 // === File Upload Drag & Drop ===
 const fileInput = document.getElementById('pdf_file');
@@ -57,16 +80,49 @@ fileDrop.addEventListener('drop', e => {
   }
 });
 
+// === Skeleton Loading HTML ===
+function getSkeletonHTML() {
+  var html = '';
+  for (var i = 0; i < 3; i++) {
+    html += '<div class="skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line medium"></div></div>';
+  }
+  return html;
+}
+
+// === Empty State HTML ===
+function getEmptyStateHTML() {
+  return '<div class="empty-state">' +
+    '<div class="empty-state-illustration">' +
+      '<svg width="80" height="80" viewBox="0 0 80 80" fill="none">' +
+        '<rect x="16" y="8" width="48" height="60" rx="6" stroke="#cbd5e1" stroke-width="2" fill="#f8fafc"/>' +
+        '<rect x="20" y="12" width="40" height="52" rx="4" stroke="#e2e8f0" stroke-width="1.5" fill="#fff"/>' +
+        '<line x1="28" y1="28" x2="52" y2="28" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="28" y1="36" x2="46" y2="36" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="28" y1="44" x2="50" y2="44" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="58" cy="56" r="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>' +
+        '<line x1="58" y1="50" x2="58" y2="62" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="52" y1="56" x2="64" y2="56" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+      '</svg>' +
+    '</div>' +
+    '<h3>Nessun bando caricato</h3>' +
+    '<p>Carica il tuo primo bando PDF per iniziare</p>' +
+    '<button class="btn btn-primary" onclick="switchToTab(\'upload\')">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+      'Carica un bando' +
+    '</button>' +
+  '</div>';
+}
+
 // === Load Bandi ===
 async function loadBandi() {
   const container = document.getElementById('bandi-list');
-  container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Caricamento bandi...</p></div>';
+  container.innerHTML = getSkeletonHTML();
   try {
     const response = await fetch(API.list + '?tenant_id=' + CONFIG.tenant_id);
     const data = await response.json();
     bandiData = data.bandi || [];
     if (bandiData.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>Nessun bando caricato.</p><p>Vai alla sezione "Carica PDF" per aggiungere il primo bando.</p></div>';
+      container.innerHTML = getEmptyStateHTML();
       return;
     }
     container.innerHTML = bandiData.map((bando, i) => {
@@ -74,7 +130,7 @@ async function loadBandi() {
       const isExpired = bando.data_scadenza && new Date(bando.data_scadenza) < new Date();
       const badgeClass = isExpired ? 'scaduto' : 'attivo';
       const badgeText = isExpired ? 'Scaduto' : 'Attivo';
-      return '<div class="bando-card" style="animation-delay:' + (i * 0.05) + 's">' +
+      return '<div class="bando-card status-' + badgeClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
         '<div class="bando-info">' +
           '<h3>' + bando.nome_bando + '</h3>' +
           '<div class="bando-meta">' +
@@ -115,7 +171,12 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
     const data = await response.json();
     if (data.success) {
       resultDiv.className = 'result-message success';
-      resultDiv.textContent = 'Bando caricato e indicizzato con successo!';
+      resultDiv.innerHTML =
+        '<svg class="upload-success-check" viewBox="0 0 52 52">' +
+          '<circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" stroke="#22c55e" stroke-width="2"/>' +
+          '<path class="checkmark-check" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>' +
+        '</svg>' +
+        'Bando caricato e indicizzato con successo!';
       showToast('Bando caricato e indicizzato con successo!', 'success');
       document.getElementById('upload-form').reset();
       fileName.textContent = '';
@@ -167,11 +228,21 @@ document.getElementById('btn-confirm-delete').addEventListener('click', async ()
 });
 
 // === Chat ===
+function getTimeString() {
+  var now = new Date();
+  return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+}
+
 document.getElementById('chat-form').addEventListener('submit', async e => {
   e.preventDefault();
   const input = document.getElementById('chat-input');
   const message = input.value.trim();
   if (!message) return;
+
+  // Remove welcome screen if present
+  var welcome = document.querySelector('.chat-welcome');
+  if (welcome) welcome.remove();
+
   addChatMessage(message, 'user');
   input.value = '';
   const btnSend = document.getElementById('btn-send');
@@ -198,7 +269,10 @@ function addChatMessage(text, type) {
   const d = document.createElement('div');
   d.className = 'message ' + type;
   const avatar = type === 'bot' ? 'AI' : 'Tu';
-  d.innerHTML = '<div class="message-avatar">' + avatar + '</div><div class="message-content">' + text.replace(/\n/g, '<br>') + '</div>';
+  const time = getTimeString();
+  d.innerHTML = '<div class="message-avatar">' + avatar + '</div>' +
+    '<div class="message-content">' + text.replace(/\n/g, '<br>') +
+    '<div class="message-time">' + time + '</div></div>';
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
 }
@@ -220,12 +294,38 @@ function removeTypingIndicator(id) {
   if (el) el.remove();
 }
 
+// === Suggestion Chips ===
+function sendSuggestion(text) {
+  var welcome = document.querySelector('.chat-welcome');
+  if (welcome) welcome.remove();
+  document.getElementById('chat-input').value = text;
+  document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+}
+
+// === Chat Welcome ===
+function showChatWelcome() {
+  const c = document.getElementById('chat-messages');
+  c.innerHTML = '';
+  var div = document.createElement('div');
+  div.className = 'chat-welcome';
+  div.innerHTML =
+    '<div class="chat-welcome-icon">' +
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>' +
+    '</div>' +
+    '<h3>Assistente Bandi AI</h3>' +
+    '<p>Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</p>' +
+    '<div class="suggestion-chips">' +
+      '<button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Quali bandi scadono questo mese?</button>' +
+      '<button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Riassumi i bandi disponibili</button>' +
+      '<button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Quali sono i requisiti per partecipare?</button>' +
+    '</div>';
+  c.appendChild(div);
+}
+
 // === New Chat ===
 function newChat() {
   sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
-  const chatMessages = document.getElementById('chat-messages');
-  chatMessages.innerHTML = '';
-  addChatMessage('Ciao! Sono l\'assistente AI per i bandi di finanziamento. Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.', 'bot');
+  showChatWelcome();
   showToast('Nuova chat avviata', 'success');
 }
 

@@ -93,7 +93,7 @@
               <div class="chat-avatar">AI</div>
               <div>
                 <div class="chat-header-title">Assistente Bandi</div>
-                <div class="chat-header-status">Online</div>
+                <div class="chat-header-status"><span class="status-dot"></span> Online</div>
               </div>
             </div>
             <button class="btn btn-new-chat" id="btn-new-chat" onclick="newChat()" title="Nuova chat">
@@ -102,7 +102,18 @@
             </button>
           </div>
           <div class="chat-messages" id="chat-messages">
-            <div class="message bot"><div class="message-avatar">AI</div><div class="message-content">Ciao! Sono l'assistente AI per i bandi di finanziamento. Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</div></div>
+            <div class="chat-welcome">
+              <div class="chat-welcome-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Assistente Bandi AI</h3>
+              <p>Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</p>
+              <div class="suggestion-chips">
+                <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Quali bandi scadono questo mese?</button>
+                <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Riassumi i bandi disponibili</button>
+                <button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Quali sono i requisiti per partecipare?</button>
+              </div>
+            </div>
           </div>
           <form class="chat-input" id="chat-form">
             <input type="text" id="chat-input" placeholder="Scrivi la tua domanda..." autocomplete="off">
