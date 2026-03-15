@@ -79,7 +79,6 @@ async function loadBandi() {
           '<h3>' + bando.nome_bando + '</h3>' +
           '<div class="bando-meta">' +
             '<span class="badge-scadenza ' + badgeClass + '">' + badgeText + ' \u2022 ' + scadenza + '</span>' +
-            '<span class="badge-chunks">' + bando.chunk_count + ' chunk</span>' +
           '</div>' +
         '</div>' +
         '<div class="bando-actions">' +
