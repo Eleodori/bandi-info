@@ -1,3 +1,27 @@
+// === Auth ===
+(function checkAuth() {
+  if (sessionStorage.getItem('bandi_auth') === 'ok') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+})();
+
+function doLogin(e) {
+  e.preventDefault();
+  var pwd = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+  if (pwd === 'bandi2026') {
+    sessionStorage.setItem('bandi_auth', 'ok');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } else {
+    errEl.textContent = 'Password errata. Riprova.';
+    errEl.style.display = 'block';
+    document.getElementById('login-password').value = '';
+  }
+}
+
+// === Config ===
 const CONFIG = {
   apiBase: 'https://maritsrl.app.n8n.cloud/webhook',
   tenant_id: 'default',
@@ -13,6 +37,7 @@ const API = {
 
 let sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
 let bandiData = [];
+let chatHistory = [];
 
 // === Toast Notifications ===
 function showToast(message, type) {
@@ -113,6 +138,68 @@ function getEmptyStateHTML() {
   '</div>';
 }
 
+// === Sort Bandi: active first (ascending by date), expired last (ascending by date) ===
+function sortBandi(bandi) {
+  var now = new Date();
+  return bandi.slice().sort(function (a, b) {
+    var dateA = a.data_scadenza ? new Date(a.data_scadenza) : null;
+    var dateB = b.data_scadenza ? new Date(b.data_scadenza) : null;
+    var expiredA = dateA ? dateA < now : false;
+    var expiredB = dateB ? dateB < now : false;
+    // Active before expired
+    if (expiredA !== expiredB) return expiredA ? 1 : -1;
+    // Within same group, sort by date ascending (soonest first)
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    return dateA - dateB;
+  });
+}
+
+// === Render Bandi List ===
+function renderBandi(bandi) {
+  var container = document.getElementById('bandi-list');
+  if (bandi.length === 0) {
+    var searchVal = document.getElementById('bandi-search') ? document.getElementById('bandi-search').value.trim() : '';
+    if (searchVal) {
+      container.innerHTML = '<div class="empty-state"><p>Nessun bando trovato per "' + searchVal.replace(/</g, '&lt;') + '"</p></div>';
+    } else {
+      container.innerHTML = getEmptyStateHTML();
+    }
+    return;
+  }
+  container.innerHTML = bandi.map(function (bando, i) {
+    var scadenza = bando.data_scadenza ? new Date(bando.data_scadenza).toLocaleDateString('it-IT') : 'N/D';
+    var isExpired = bando.data_scadenza && new Date(bando.data_scadenza) < new Date();
+    var badgeClass = isExpired ? 'scaduto' : 'attivo';
+    var badgeText = isExpired ? 'Scaduto' : 'Attivo';
+    return '<div class="bando-card status-' + badgeClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
+      '<div class="bando-info">' +
+        '<h3>' + bando.nome_bando + '</h3>' +
+        '<div class="bando-meta">' +
+          '<span class="badge-scadenza ' + badgeClass + '">' + badgeText + ' \u2022 ' + scadenza + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bando-actions">' +
+        '<button class="btn btn-danger" onclick="openDeleteModal(\'' + bando.nome_bando.replace(/'/g, "\\'") + '\')">Elimina</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// === Search/Filter Bandi ===
+function filterBandi() {
+  var query = document.getElementById('bandi-search').value.trim().toLowerCase();
+  if (!query) {
+    renderBandi(sortBandi(bandiData));
+    return;
+  }
+  var filtered = bandiData.filter(function (b) {
+    return b.nome_bando.toLowerCase().indexOf(query) !== -1;
+  });
+  renderBandi(sortBandi(filtered));
+}
+
 // === Load Bandi ===
 async function loadBandi() {
   const container = document.getElementById('bandi-list');
@@ -125,23 +212,7 @@ async function loadBandi() {
       container.innerHTML = getEmptyStateHTML();
       return;
     }
-    container.innerHTML = bandiData.map((bando, i) => {
-      const scadenza = bando.data_scadenza ? new Date(bando.data_scadenza).toLocaleDateString('it-IT') : 'N/D';
-      const isExpired = bando.data_scadenza && new Date(bando.data_scadenza) < new Date();
-      const badgeClass = isExpired ? 'scaduto' : 'attivo';
-      const badgeText = isExpired ? 'Scaduto' : 'Attivo';
-      return '<div class="bando-card status-' + badgeClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
-        '<div class="bando-info">' +
-          '<h3>' + bando.nome_bando + '</h3>' +
-          '<div class="bando-meta">' +
-            '<span class="badge-scadenza ' + badgeClass + '">' + badgeText + ' \u2022 ' + scadenza + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="bando-actions">' +
-          '<button class="btn btn-danger" onclick="openDeleteModal(\'' + bando.nome_bando.replace(/'/g, "\\'") + '\')">Elimina</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
+    renderBandi(sortBandi(bandiData));
   } catch (err) {
     container.innerHTML = '<div class="empty-state" style="color:#ef4444;">Errore nel caricamento: ' + err.message + '</div>';
   }
@@ -244,19 +315,35 @@ document.getElementById('chat-form').addEventListener('submit', async e => {
   if (welcome) welcome.remove();
 
   addChatMessage(message, 'user');
+  chatHistory.push({ role: 'user', content: message });
   input.value = '';
   const btnSend = document.getElementById('btn-send');
   btnSend.disabled = true;
   const typingId = showTypingIndicator();
   try {
+    // Ensure the last message is always from the user
+    // Build a clean history that always ends with a user message
+    var messagesToSend = chatHistory.slice();
+    // Remove any trailing assistant messages (safety net)
+    while (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role !== 'user') {
+      messagesToSend.pop();
+    }
+
     const response = await fetch(API.chat, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'sendMessage', chatInput: message, sessionId: sessionId })
+      body: JSON.stringify({
+        action: 'sendMessage',
+        chatInput: message,
+        sessionId: sessionId,
+        history: messagesToSend
+      })
     });
     const data = await response.json();
     removeTypingIndicator(typingId);
-    addChatMessage(data.output || data.text || data.response || 'Risposta non disponibile', 'bot');
+    var botReply = data.output || data.text || data.response || 'Risposta non disponibile';
+    addChatMessage(botReply, 'bot');
+    chatHistory.push({ role: 'assistant', content: botReply });
   } catch (err) {
     removeTypingIndicator(typingId);
     addChatMessage('Errore: ' + err.message, 'bot');
@@ -325,6 +412,7 @@ function showChatWelcome() {
 // === New Chat ===
 function newChat() {
   sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
+  chatHistory = [];
   showChatWelcome();
   showToast('Nuova chat avviata', 'success');
 }
