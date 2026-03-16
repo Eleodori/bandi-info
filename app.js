@@ -6,6 +6,21 @@ const BRAND = {
   logo_testo: 'BI'
 };
 
+// === Config ===
+const CONFIG = {
+  apiBase: 'https://maritsrl.app.n8n.cloud/webhook',
+  tenant_id: 'default',
+  chatWebhookId: 'bandi-chat'
+};
+
+const API = {
+  upload: CONFIG.apiBase + '/bandi-upload',
+  list: CONFIG.apiBase + '/bandi-lista',
+  delete: CONFIG.apiBase + '/bandi-elimina',
+  rename: CONFIG.apiBase + '/bandi-rinomina',
+  chat: CONFIG.apiBase + '/' + CONFIG.chatWebhookId + '/chat'
+};
+
 // Apply brand color as CSS custom property
 (function applyBrand() {
   var r = document.documentElement;
@@ -99,21 +114,6 @@ function showOnboarding() {
   renderStep();
   document.body.appendChild(overlay);
 }
-
-// === Config ===
-const CONFIG = {
-  apiBase: 'https://maritsrl.app.n8n.cloud/webhook',
-  tenant_id: 'default',
-  chatWebhookId: 'bandi-chat'
-};
-
-const API = {
-  upload: CONFIG.apiBase + '/bandi-upload',
-  list: CONFIG.apiBase + '/bandi-lista',
-  delete: CONFIG.apiBase + '/bandi-elimina',
-  rename: CONFIG.apiBase + '/bandi-rinomina',
-  chat: CONFIG.apiBase + '/' + CONFIG.chatWebhookId + '/chat'
-};
 
 let sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
 let bandiData = [];
