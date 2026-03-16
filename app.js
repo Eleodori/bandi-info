@@ -39,15 +39,7 @@ let chatHistory = [];
   document.title = BRAND.nome + ' - ' + BRAND.sottotitolo;
 })();
 
-// === Auth ===
-(function checkAuth() {
-  if (sessionStorage.getItem('bandi_auth') === 'ok') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    loadBandi();
-    maybeShowOnboarding();
-  }
-})();
+// === Auth === (checkAuth runs at the end of the file, after all setup)
 
 function doLogin(e) {
   e.preventDefault();
@@ -570,4 +562,11 @@ function newChat() {
 }
 
 // === Init ===
-// loadBandi() is called from checkAuth() or doLogin() after the app is visible
+(function checkAuth() {
+  if (sessionStorage.getItem('bandi_auth') === 'ok') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadBandi();
+    maybeShowOnboarding();
+  }
+})();
