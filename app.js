@@ -1,8 +1,31 @@
+// === Branding Config ===
+const BRAND = {
+  nome: 'Bandi Info',
+  sottotitolo: 'Gestione bandi di finanziamento',
+  colore_primario: '#4f46e5',
+  logo_testo: 'BI'
+};
+
+// Apply brand color as CSS custom property
+(function applyBrand() {
+  var r = document.documentElement;
+  var c = BRAND.colore_primario;
+  r.style.setProperty('--brand', c);
+  // Compute a lighter variant for hover/shadows
+  r.style.setProperty('--brand-light', c + '1a'); // 10% opacity hex
+  // Set brand texts in HTML
+  document.querySelectorAll('[data-brand="nome"]').forEach(function (el) { el.textContent = BRAND.nome; });
+  document.querySelectorAll('[data-brand="sottotitolo"]').forEach(function (el) { el.textContent = BRAND.sottotitolo; });
+  document.querySelectorAll('[data-brand="logo"]').forEach(function (el) { el.textContent = BRAND.logo_testo; });
+  document.title = BRAND.nome + ' - ' + BRAND.sottotitolo;
+})();
+
 // === Auth ===
 (function checkAuth() {
   if (sessionStorage.getItem('bandi_auth') === 'ok') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    maybeShowOnboarding();
   }
 })();
 
@@ -14,11 +37,67 @@ function doLogin(e) {
     sessionStorage.setItem('bandi_auth', 'ok');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    maybeShowOnboarding();
   } else {
     errEl.textContent = 'Password errata. Riprova.';
     errEl.style.display = 'block';
     document.getElementById('login-password').value = '';
   }
+}
+
+// === Onboarding ===
+function maybeShowOnboarding() {
+  if (localStorage.getItem('onboarding_done')) return;
+  showOnboarding();
+}
+
+function showOnboarding() {
+  var steps = [
+    { title: 'Carica il tuo primo bando', desc: 'Vai alla tab "Carica PDF" per caricare un bando in formato PDF. Verrà indicizzato automaticamente.', tab: 'upload', icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' },
+    { title: 'Consulta i bandi caricati', desc: 'Nella tab "Bandi Caricati" trovi tutti i bandi con il loro stato di scadenza. Puoi cercarli, rinominarli o eliminarli.', tab: 'bandi', icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' },
+    { title: 'Chatta con l\'assistente AI', desc: 'L\'assistente AI conosce tutti i bandi caricati. Chiedigli informazioni su scadenze, requisiti e dettagli.', tab: 'chat', icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' }
+  ];
+  var current = 0;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'onboarding-overlay';
+  overlay.className = 'onboarding-overlay';
+
+  function renderStep() {
+    var s = steps[current];
+    overlay.innerHTML =
+      '<div class="onboarding-card">' +
+        '<div class="onboarding-step-indicator">' + steps.map(function (_, i) {
+          return '<span class="onboarding-dot' + (i === current ? ' active' : i < current ? ' done' : '') + '"></span>';
+        }).join('') + '</div>' +
+        '<div class="onboarding-icon">' + s.icon + '</div>' +
+        '<h3>' + s.title + '</h3>' +
+        '<p>' + s.desc + '</p>' +
+        '<div class="onboarding-actions">' +
+          '<button class="btn btn-outline onboarding-skip" id="ob-skip">Salta</button>' +
+          '<button class="btn btn-primary" id="ob-next">' + (current < steps.length - 1 ? 'Avanti' : 'Inizia') + '</button>' +
+        '</div>' +
+        '<div class="onboarding-counter">Step ' + (current + 1) + ' di ' + steps.length + '</div>' +
+      '</div>';
+    document.getElementById('ob-next').onclick = function () {
+      if (current < steps.length - 1) {
+        current++;
+        renderStep();
+      } else {
+        closeOnboarding();
+      }
+    };
+    document.getElementById('ob-skip').onclick = closeOnboarding;
+  }
+
+  function closeOnboarding() {
+    localStorage.setItem('onboarding_done', 'true');
+    overlay.classList.add('removing');
+    overlay.addEventListener('animationend', function () { overlay.remove(); });
+  }
+
+  renderStep();
+  document.body.appendChild(overlay);
 }
 
 // === Config ===
@@ -32,6 +111,7 @@ const API = {
   upload: CONFIG.apiBase + '/bandi-upload',
   list: CONFIG.apiBase + '/bandi-lista',
   delete: CONFIG.apiBase + '/bandi-elimina',
+  rename: CONFIG.apiBase + '/bandi-rinomina',
   chat: CONFIG.apiBase + '/' + CONFIG.chatWebhookId + '/chat'
 };
 
@@ -50,6 +130,25 @@ function showToast(message, type) {
     toast.classList.add('removing');
     toast.addEventListener('animationend', () => toast.remove());
   }, 3000);
+}
+
+// === Upload Overlay ===
+function showUploadOverlay(text) {
+  var ov = document.getElementById('upload-overlay');
+  if (!ov) return;
+  ov.querySelector('.upload-overlay-text').textContent = text;
+  ov.style.display = 'flex';
+}
+
+function updateUploadOverlay(text) {
+  var ov = document.getElementById('upload-overlay');
+  if (!ov) return;
+  ov.querySelector('.upload-overlay-text').textContent = text;
+}
+
+function hideUploadOverlay() {
+  var ov = document.getElementById('upload-overlay');
+  if (ov) ov.style.display = 'none';
 }
 
 // === Button Ripple Effect ===
@@ -124,9 +223,9 @@ function getEmptyStateHTML() {
         '<line x1="28" y1="28" x2="52" y2="28" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
         '<line x1="28" y1="36" x2="46" y2="36" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
         '<line x1="28" y1="44" x2="50" y2="44" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>' +
-        '<circle cx="58" cy="56" r="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>' +
-        '<line x1="58" y1="50" x2="58" y2="62" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
-        '<line x1="52" y1="56" x2="64" y2="56" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="58" cy="56" r="14" fill="#eff6ff" stroke="var(--brand)" stroke-width="2"/>' +
+        '<line x1="58" y1="50" x2="58" y2="62" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"/>' +
+        '<line x1="52" y1="56" x2="64" y2="56" stroke="var(--brand)" stroke-width="2" stroke-linecap="round"/>' +
       '</svg>' +
     '</div>' +
     '<h3>Nessun bando caricato</h3>' +
@@ -138,7 +237,7 @@ function getEmptyStateHTML() {
   '</div>';
 }
 
-// === Sort Bandi: active first (ascending by date), expired last (ascending by date) ===
+// === Sort Bandi ===
 function sortBandi(bandi) {
   var now = new Date();
   return bandi.slice().sort(function (a, b) {
@@ -146,9 +245,7 @@ function sortBandi(bandi) {
     var dateB = b.data_scadenza ? new Date(b.data_scadenza) : null;
     var expiredA = dateA ? dateA < now : false;
     var expiredB = dateB ? dateB < now : false;
-    // Active before expired
     if (expiredA !== expiredB) return expiredA ? 1 : -1;
-    // Within same group, sort by date ascending (soonest first)
     if (!dateA && !dateB) return 0;
     if (!dateA) return 1;
     if (!dateB) return -1;
@@ -173,18 +270,70 @@ function renderBandi(bandi) {
     var isExpired = bando.data_scadenza && new Date(bando.data_scadenza) < new Date();
     var badgeClass = isExpired ? 'scaduto' : 'attivo';
     var badgeText = isExpired ? 'Scaduto' : 'Attivo';
+    var escapedName = bando.nome_bando.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     return '<div class="bando-card status-' + badgeClass + '" style="animation-delay:' + (i * 0.05) + 's">' +
       '<div class="bando-info">' +
-        '<h3>' + bando.nome_bando + '</h3>' +
+        '<div class="bando-name-row">' +
+          '<h3 class="bando-name-text" id="bname-' + i + '">' + bando.nome_bando + '</h3>' +
+          '<button class="btn-rename" onclick="startRename(' + i + ', \'' + escapedName + '\')" title="Rinomina">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>' +
+          '</button>' +
+        '</div>' +
         '<div class="bando-meta">' +
           '<span class="badge-scadenza ' + badgeClass + '">' + badgeText + ' \u2022 ' + scadenza + '</span>' +
         '</div>' +
       '</div>' +
       '<div class="bando-actions">' +
-        '<button class="btn btn-danger" onclick="openDeleteModal(\'' + bando.nome_bando.replace(/'/g, "\\'") + '\')">Elimina</button>' +
+        '<button class="btn btn-danger" onclick="openDeleteModal(\'' + escapedName + '\')">Elimina</button>' +
       '</div>' +
     '</div>';
   }).join('');
+}
+
+// === Rename Bando ===
+function startRename(index, currentName) {
+  var h3 = document.getElementById('bname-' + index);
+  if (!h3) return;
+  var row = h3.parentElement;
+  // Replace h3 + button with input
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'rename-input';
+  input.value = currentName;
+  row.innerHTML = '';
+  row.appendChild(input);
+  input.focus();
+  input.select();
+
+  function doRename() {
+    var newName = input.value.trim();
+    if (!newName || newName === currentName) {
+      // Cancel — re-render
+      renderBandi(sortBandi(bandiData));
+      return;
+    }
+    input.disabled = true;
+    fetch(API.rename, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome_vecchio: currentName, nome_nuovo: newName, tenant_id: CONFIG.tenant_id })
+    }).then(function () {
+      // Update local data
+      var bando = bandiData.find(function (b) { return b.nome_bando === currentName; });
+      if (bando) bando.nome_bando = newName;
+      renderBandi(sortBandi(bandiData));
+      showToast('Bando rinominato in "' + newName + '"', 'success');
+    }).catch(function (err) {
+      showToast('Errore rinomina: ' + err.message, 'error');
+      renderBandi(sortBandi(bandiData));
+    });
+  }
+
+  input.addEventListener('blur', doRename);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = currentName; input.blur(); }
+  });
 }
 
 // === Search/Filter Bandi ===
@@ -231,6 +380,8 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
   resultDiv.className = 'result-message';
   resultDiv.style.display = 'none';
 
+  showUploadOverlay('Caricamento in corso... \u23f3');
+
   const formData = new FormData();
   formData.append('file', document.getElementById('pdf_file').files[0]);
   formData.append('nome_bando', document.getElementById('nome_bando').value);
@@ -238,8 +389,10 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
   formData.append('tenant_id', CONFIG.tenant_id);
 
   try {
+    updateUploadOverlay('Indicizzazione PDF... \ud83d\udd04');
     const response = await fetch(API.upload, { method: 'POST', body: formData });
     const data = await response.json();
+    hideUploadOverlay();
     if (data.success) {
       resultDiv.className = 'result-message success';
       resultDiv.innerHTML =
@@ -255,6 +408,7 @@ document.getElementById('upload-form').addEventListener('submit', async e => {
       throw new Error(data.message || 'Errore sconosciuto');
     }
   } catch (err) {
+    hideUploadOverlay();
     resultDiv.className = 'result-message error';
     resultDiv.textContent = 'Errore: ' + err.message;
     showToast('Errore durante il caricamento: ' + err.message, 'error');
@@ -310,7 +464,6 @@ document.getElementById('chat-form').addEventListener('submit', async e => {
   const message = input.value.trim();
   if (!message) return;
 
-  // Remove welcome screen if present
   var welcome = document.querySelector('.chat-welcome');
   if (welcome) welcome.remove();
 
@@ -321,10 +474,7 @@ document.getElementById('chat-form').addEventListener('submit', async e => {
   btnSend.disabled = true;
   const typingId = showTypingIndicator();
   try {
-    // Ensure the last message is always from the user
-    // Build a clean history that always ends with a user message
     var messagesToSend = chatHistory.slice();
-    // Remove any trailing assistant messages (safety net)
     while (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role !== 'user') {
       messagesToSend.pop();
     }
@@ -397,9 +547,9 @@ function showChatWelcome() {
   div.className = 'chat-welcome';
   div.innerHTML =
     '<div class="chat-welcome-icon">' +
-      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>' +
+      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>' +
     '</div>' +
-    '<h3>Assistente Bandi AI</h3>' +
+    '<h3>Assistente ' + BRAND.nome + '</h3>' +
     '<p>Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</p>' +
     '<div class="suggestion-chips">' +
       '<button class="suggestion-chip" onclick="sendSuggestion(this.textContent)">Quali bandi scadono questo mese?</button>' +

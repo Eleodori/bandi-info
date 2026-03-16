@@ -13,9 +13,9 @@
   <div id="login-screen" class="login-screen">
     <div class="login-card">
       <div class="login-logo">
-        <div class="logo-icon">BI</div>
+        <div class="logo-icon" data-brand="logo">BI</div>
       </div>
-      <h1 class="login-title">Bandi Info</h1>
+      <h1 class="login-title" data-brand="nome">Bandi Info</h1>
       <p class="login-subtitle">Inserisci la password per accedere</p>
       <form onsubmit="doLogin(event)">
         <div class="login-field">
@@ -31,10 +31,10 @@
     <header>
       <div class="header-content">
         <div class="header-logo">
-          <div class="logo-icon">BI</div>
+          <div class="logo-icon" data-brand="logo">BI</div>
           <div>
-            <h1>Bandi Info</h1>
-            <p class="subtitle">Gestione bandi di finanziamento</p>
+            <h1 data-brand="nome">Bandi Info</h1>
+            <p class="subtitle" data-brand="sottotitolo">Gestione bandi di finanziamento</p>
           </div>
         </div>
       </div>
@@ -69,7 +69,14 @@
         <div id="bandi-list" class="bandi-grid"><div class="loading"><div class="loading-spinner"></div><p>Caricamento bandi...</p></div></div>
       </section>
       <section id="tab-upload" class="tab-content">
-        <div class="upload-wrapper">
+        <div class="upload-wrapper" style="position:relative">
+          <!-- Upload Overlay -->
+          <div id="upload-overlay" class="upload-overlay" style="display:none">
+            <div class="upload-overlay-inner">
+              <div class="upload-overlay-spinner"></div>
+              <p class="upload-overlay-text">Caricamento in corso...</p>
+            </div>
+          </div>
           <div class="upload-header">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <h2>Carica un nuovo bando</h2>
@@ -126,7 +133,7 @@
           <div class="chat-messages" id="chat-messages">
             <div class="chat-welcome">
               <div class="chat-welcome-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand, #4f46e5)" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round"/></svg>
               </div>
               <h3>Assistente Bandi AI</h3>
               <p>Chiedimi informazioni su scadenze, requisiti o qualsiasi dettaglio sui bandi caricati.</p>
