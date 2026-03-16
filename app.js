@@ -44,6 +44,7 @@ let chatHistory = [];
   if (sessionStorage.getItem('bandi_auth') === 'ok') {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    loadBandi();
     maybeShowOnboarding();
   }
 })();
@@ -56,6 +57,7 @@ function doLogin(e) {
     sessionStorage.setItem('bandi_auth', 'ok');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    loadBandi();
     maybeShowOnboarding();
   } else {
     errEl.textContent = 'Password errata. Riprova.';
@@ -568,4 +570,4 @@ function newChat() {
 }
 
 // === Init ===
-loadBandi();
+// loadBandi() is called from checkAuth() or doLogin() after the app is visible
