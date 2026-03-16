@@ -21,6 +21,10 @@ const API = {
   chat: CONFIG.apiBase + '/' + CONFIG.chatWebhookId + '/chat'
 };
 
+let sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
+let bandiData = [];
+let chatHistory = [];
+
 // Apply brand color as CSS custom property
 (function applyBrand() {
   var r = document.documentElement;
@@ -114,10 +118,6 @@ function showOnboarding() {
   renderStep();
   document.body.appendChild(overlay);
 }
-
-let sessionId = crypto.randomUUID ? crypto.randomUUID() : 'session_' + Math.random().toString(36).substr(2, 9);
-let bandiData = [];
-let chatHistory = [];
 
 // === Toast Notifications ===
 function showToast(message, type) {
